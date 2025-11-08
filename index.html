@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analog Watch with Countdown Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        #clockContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        #clockCanvas {
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+        }
+        
+        #timerSection {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            min-width: 300px;
+            text-align: center;
+        }
+        
+        #timerInput {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        #timeInput {
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        #startButton {
+            padding: 12px 24px;
+            font-size: 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        #startButton:hover {
+            background: #764ba2;
+        }
+        
+        #timerDisplay {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        #countdown {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #stopButton {
+            padding: 12px 24px;
+            font-size: 16px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        #stopButton:hover {
+            background: #c82333;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        #timerDisplay:not(.hidden) {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <div id="clockContainer">
+        <canvas id="clockCanvas"></canvas>
+        
+        <div id="timerSection">
+            <div id="timerInput">
+                <input 
+                    type="text" 
+                    id="timeInput" 
+                    placeholder="HH:MM:SS (e.g., 01:30:00)"
+                    pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"
+                >
+                <button id="startButton">Start Timer</button>
+            </div>
+            
+            <div id="timerDisplay" class="hidden">
+                <div id="countdown">00:00:00</div>
+                <button id="stopButton">Stop</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get canvas and context
+        const canvas = document.getElementById('clockCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Calculate canvas size (2/3 of smaller screen dimension)
+        function resizeCanvas() {
+            const minDimension = Math.min(window.innerWidth, window.innerHeight);
+            const size = Math.floor(minDimension * 2 / 3);
+            canvas.width = size;
+            canvas.height = size;
+        }
+        
+        // Initial resize
+        resizeCanvas();
+        
+        // Resize on window resize
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Draw the analog clock
+        function drawClock() {
+            const now = new Date();
+            const hours = now.getHours() % 12;
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const milliseconds = now.getMilliseconds();
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const radius = Math.min(width, height) / 2 - 10;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw clock face
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Draw hour markers
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 12; i++) {
+                const angle = (i * 30) * Math.PI / 180;
+                const startX = centerX + Math.cos(angle - Math.PI / 2) * (radius - 15);
+                const startY = centerY + Math.sin(angle - Math.PI / 2) * (radius - 15);
+                const endX = centerX + Math.cos(angle - Math.PI / 2) * (radius - 5);
+                const endY = centerY + Math.sin(angle - Math.PI / 2) * (radius - 5);
+                
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+            }
+            
+            // Draw minute markers
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 60; i++) {
+                if (i % 5 !== 0) {
+                    const angle = (i * 6) * Math.PI / 180;
+                    const startX = centerX + Math.cos(angle - Math.PI / 2) * (radius - 10);
+                    const startY = centerY + Math.sin(angle - Math.PI / 2) * (radius - 10);
+                    const endX = centerX + Math.cos(angle - Math.PI / 2) * (radius - 5);
+                    const endY = centerY + Math.sin(angle - Math.PI / 2) * (radius - 5);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
+                }
+            }
+            
+            // Draw hour hand
+            const hourAngle = ((hours + minutes / 60 + seconds / 3600) * 30) * Math.PI / 180;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(
+                centerX + Math.cos(hourAngle - Math.PI / 2) * (radius * 0.5),
+                centerY + Math.sin(hourAngle - Math.PI / 2) * (radius * 0.5)
+            );
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // Draw minute hand
+            const minuteAngle = ((minutes + seconds / 60) * 6) * Math.PI / 180;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(
+                centerX + Math.cos(minuteAngle - Math.PI / 2) * (radius * 0.7),
+                centerY + Math.sin(minuteAngle - Math.PI / 2) * (radius * 0.7)
+            );
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // Draw second hand
+            const secondAngle = ((seconds + milliseconds / 1000) * 6) * Math.PI / 180;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(
+                centerX + Math.cos(secondAngle - Math.PI / 2) * (radius * 0.8),
+                centerY + Math.sin(secondAngle - Math.PI / 2) * (radius * 0.8)
+            );
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // Draw center dot
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
+            ctx.fillStyle = '#333';
+            ctx.fill();
+        }
+        
+        // Update clock every 50ms for smooth second hand
+        setInterval(drawClock, 50);
+        drawClock();
+        
+        // Countdown timer functionality
+        let countdownInterval = null;
+        let remainingSeconds = 0;
+        
+        const timeInput = document.getElementById('timeInput');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const timerInput = document.getElementById('timerInput');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const countdownDisplay = document.getElementById('countdown');
+        
+        function parseTimeInput(input) {
+            const parts = input.split(':');
+            if (parts.length !== 3) return null;
+            
+            const hours = parseInt(parts[0], 10);
+            const minutes = parseInt(parts[1], 10);
+            const seconds = parseInt(parts[2], 10);
+            
+            if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) return null;
+            if (hours < 0 || minutes < 0 || minutes >= 60 || seconds < 0 || seconds >= 60) return null;
+            
+            return hours * 3600 + minutes * 60 + seconds;
+        }
+        
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        
+        function updateCountdownDisplay() {
+            countdownDisplay.textContent = formatTime(remainingSeconds);
+            
+            if (remainingSeconds <= 0) {
+                stopTimer();
+            }
+        }
+        
+        function startTimer() {
+            const totalSeconds = parseTimeInput(timeInput.value);
+            
+            if (totalSeconds === null || totalSeconds <= 0) {
+                alert('Please enter a valid time in format HH:MM:SS (e.g., 01:30:00)');
+                return;
+            }
+            
+            remainingSeconds = totalSeconds;
+            
+            // Switch UI
+            timerInput.classList.add('hidden');
+            timerDisplay.classList.remove('hidden');
+            
+            // Update display immediately
+            updateCountdownDisplay();
+            
+            // Start countdown
+            countdownInterval = setInterval(() => {
+                remainingSeconds--;
+                updateCountdownDisplay();
+            }, 1000);
+        }
+        
+        function stopTimer() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            
+            // Switch UI back
+            timerDisplay.classList.add('hidden');
+            timerInput.classList.remove('hidden');
+            
+            // Reset input
+            timeInput.value = '';
+        }
+        
+        // Event listeners
+        startButton.addEventListener('click', startTimer);
+        stopButton.addEventListener('click', stopTimer);
+        
+        timeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                startTimer();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -3,4 +3,4 @@ A pure HTML and JavaScript implementation of an analog watch with a count down t
 
 [Single file HTML](index.html) currently live at [welten.ai](http://welten.ai)
 
-**Created on 2025-11-08 by [Raphael Volz](https://www.raphaelvolz.de/) using a single Github Co-Pilot Agent prompt.**
+**Created 2025-11-08 by [Raphael Volz](https://www.raphaelvolz.de/) using a single Github Co-Pilot Agent prompt.**
